@@ -1,0 +1,15 @@
+[project]
+name = "nyc-capstone"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dash>=2.18.2",
+    "geopandas>=1.0.1",
+    "pandas>=2.2.3",
+    "polars>=1.22.0",
+    "requests>=2.32.3",
+    "socrata-py>=1.1.13",
+    "sodapy>=2.2.0",
+]
