@@ -1,8 +1,8 @@
 import dash
-from dash import dcc, html
+from dash import dcc, html, Input, Output
 import plotly.express as px
-import pandas as pd
 import json
+import pandas as pd
 
 import data.data_endpoints as nyc_data
 from query.api_socrata import nyc_api_read
@@ -30,7 +30,7 @@ df_dog_summary = (df_dog
                   .reset_index()
                   )
 df_dog_summary = df_dog_summary.rename(columns = {'species': 'count'})
-years = df_dog_summary['year'].unique().tolist() 
+years = df_dog_summary['bite_year'].unique().tolist() 
 # Data table:
 # bite_year | borough | count
 
@@ -61,7 +61,7 @@ def merge_geo_df(bite_year):
         dog_bite_count = (
             df_dog_summary[(
                 df_dog_summary['borough'] == boro_name
-        ) & (df_dog_summary['year'] == bite_year)]['count']
+        ) & (df_dog_summary['bite_year'] == bite_year)]['count']
             .values
         )
         feature['properties']['BiteCount'] = dog_bite_count[0] if dog_bite_count else 0
