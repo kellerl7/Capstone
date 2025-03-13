@@ -37,6 +37,16 @@ years = df_dog_summary['bite_year'].unique().tolist()
 # DASHBOARD
 app = dash.Dash(__name__)
 
+fig = px.choropleth_map(
+    geojson = geojson_data,
+    locations=[feature['properties']['BoroName'] for feature in geojson_data['features']],
+    color=[1]*len(geojson_data['features']),
+    zoom=10,
+    center={"lat":40.7128, "lon": -74.0060},
+    opacity=0.5,
+    height=600,
+)
+
 app.layout = html.Div([
     html.H1("NYC Dog Bite by Borough"),
     html.P("Select a year:"),
@@ -47,37 +57,8 @@ app.layout = html.Div([
         inline=True
     ),
     dcc.Graph(
-        id="graph"
+        figure=fig
     ),
 ])
-
-@app.callback(
-    Output("graph", "figure"),
-    Input("biteyear", "value")
-)
-def merge_geo_df(bite_year):
-    for feature in geojson_data['features']:
-        boro_name = feature['properties']['BoroName']
-        dog_bite_count = (
-            df_dog_summary[(
-                df_dog_summary['borough'] == boro_name
-        ) & (df_dog_summary['bite_year'] == bite_year)]['count']
-            .values
-        )
-        feature['properties']['BiteCount'] = dog_bite_count[0] if dog_bite_count else 0
-
-    fig = px.choropleth(
-        df_dog_summary[df_dog_summary==bite_year],
-        geojson=geojson_data,
-        color="count",
-        locations="borough",
-        featureidkey="properties.BoroName",
-        projection="mercator",
-        range_color=[0, 6500]
-    )
-    fig.update_geos(fitbounds="locations", visible=False)
-    fig.update_layout(margin={"r":0, "t":0, "l":0, "b":0})
-    return fig
-
 
 app.run_server(debug=True)
