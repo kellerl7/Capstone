@@ -18,6 +18,7 @@ with open('data/ny_new_york_zip_codes_geo.min.json', 'rb') as f:
 with open('data/PUMA_nyc_2020.geojson', 'rb') as f:
     nyc_puma = json.load(f)
 target = nyc_api_read(nyc_data.nyc_NFHDM, limit=5000)
+df_pricing = pd.read_parquet("data/nyc_rent_pricing.parquet.gzip", engine="pyarrow")
 
 df_dog = nyc_api_read(nyc_data.nyc_DOG, limit=30000)
 df_dog['bite_date'] = pd.to_datetime(df_dog['dateofbite'])
@@ -65,11 +66,12 @@ _cfg = cfg['plotly_config']['Bronx']
 plot_df = target.loc[(target['year_published'] == 2020) & (target['goal'])
                      ]
 fig = px.choropleth_map(
-    plot_df,
-    geojson=nyc_puma,
-    featureidkey='properties.PUMA',
-    locations='puma',
-    color='indexscore',
+    df_pricing,
+    geojson=nyc_zip,
+    featureidkey='properties.ZCTA5CE10',
+    locations='postal_code',
+    color='median_listing_price',
+    animation_frame='month_date',
     map_style='outdoors'
 )
 fig.show()
