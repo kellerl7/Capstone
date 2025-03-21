@@ -2,6 +2,7 @@ import pandas as pd
 import json
 
 # Read in 2 files:
+# SOURCE: https://www.realtor.com/research/data/
 # 1. RDC Inventory Core Metrics Zip (current file)
 # 2. RDC Inventory Core Metrics Zip History (historical)
 
