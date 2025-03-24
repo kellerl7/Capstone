@@ -1502,7 +1502,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "ruff", specifier = ">=0.11.1" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
-    { name = "seaborn" },
+    { name = "seaborn", specifier = ">=0.13.2" },
     { name = "socrata-py", specifier = ">=1.1.13" },
     { name = "sodapy", specifier = ">=2.2.0" },
 ]
