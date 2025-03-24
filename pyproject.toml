@@ -9,6 +9,7 @@ dependencies = [
     "fastparquet>=2024.11.0",
     "folium>=0.19.5",
     "geopandas>=1.0.1",
+    "git-filter-repo>=2.47.0",
     "ipython>=9.0.2",
     "jupyter>=1.1.1",
     "jupyterlab>=4.3.6",
