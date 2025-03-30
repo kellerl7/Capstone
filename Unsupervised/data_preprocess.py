@@ -147,7 +147,7 @@ def process_pca_scaled(
         n_components=n_pca
     )
     processed_pca = pca.fit_transform(df[cols_to_cluster])
-    pca_loadings = pca_explanation(pca, cols_to_cluster)
+    pca_loadings = pca_explanation(pca, cols_to_cluster, n_pca)
 
     return processed_pca, pca_loadings
 
@@ -171,7 +171,7 @@ def pca_explanation(
     pca_loadings =pd.DataFrame(
         pca_.components_.T,
         index=feature_names,
-        columns=[f'PC{i+1}' for i in range(len(n_pca))]
+        columns=[f'PC{i+1}' for i in range(n_pca)]
     )
     return pca_loadings
     
@@ -215,7 +215,8 @@ def main(
     print(f'Scaled Dataframe shape: {df_scaled.shape}')
     print(f'PCA composition shape: {pca_composition.shape}')
 
-    pca_composed_df = pca_composition
+    pca_composed_df = pd.DataFrame(pca_composition)
+    pca_composed_df.columns = [f'PC{i+1}' for i in range(n_pca)]
     pca_composed_df['cluster'] = kmeans_cluster
     pca_composed_df['revised_market_value'] = df_merged['revised_market_value']
     pca_composed_df['zip'] = df_merged['zip']
