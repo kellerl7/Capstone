@@ -4,7 +4,10 @@ import json
 import geopandas as gpd
 import pandas as pd
 
-import unsupervised.data_preprocess as data_pre
+try:
+    import preprocess.data_preprocess as data_pre
+except ModuleNotFoundError as e:
+    print(e)
 
 # Load in our zipcode data
 with open('data/ny_new_york_zip_codes_geo.min.json', 'rb') as f:
@@ -19,7 +22,7 @@ map_df, loadings = data_pre.main(
 
 # Define our mapping variables
 map_json = nyc_zips
-map_idkey = 'properties.ZCTA5E10'
+map_idkey = 'properties.ZCTA5CE10'
 
 # Create our map
 fig = px.choropleth_map(
