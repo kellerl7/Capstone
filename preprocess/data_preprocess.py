@@ -8,8 +8,8 @@ from data.constants.constants import RAND_STATE
 
 
 def data_read(
-        public_facilities: str="data/public_fac.csv",
-        property_values: str="data/prop_values.csv"
+        public_facilities: str = "data/public_fac.csv",
+        property_values: str = "data/prop_values.csv"
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     df_facilities = pd.read_csv(public_facilities)
     df_prop_values = pd.read_csv(property_values)
@@ -45,6 +45,7 @@ def process_facility(
 
     return df_facil_pivot
 
+
 def process_property_value(
         df_prop: pd.DataFrame
 ) -> pd.DataFrame:
@@ -65,6 +66,7 @@ def process_property_value(
 
     return df_property_value
 
+
 def merge_processed_df(
         df_fac: pd.DataFrame,
         df_prop: pd.DataFrame
@@ -74,39 +76,40 @@ def merge_processed_df(
     and merges and scales the dataframes
     """
     facilities = df_fac.merge(df_prop, left_on='zip', right_on='zip')
+    facilities['zip'] = facilities['zip'].astype(int).astype(str)
 
     return facilities
 
 
 def process_scale_df(
         merged_df: pd.DataFrame,
-        exclude_columns: list=[]
+        exclude_columns: list = []
 ) -> pd.DataFrame:
     """
     Take merged dataframe and output scale it using the standard scalar
     - If there are columns to be excluded from the scaling,
       provide the column names as a list
     """
-    
 
-    to_scale = merged_df.columns.to_list() # all but the last (Itarget)
+    to_scale = merged_df.columns.to_list()  # all but the last (Itarget)
 
     if len(exclude_columns) > 0:
         to_scale = [col for col in to_scale if col not in exclude_columns]
-    
+
     # Setup our scaler
     scaler = StandardScaler()
     df_scaled = pd.DataFrame(scaler
                              .fit_transform(
                                  merged_df[to_scale]),
-                                 columns=to_scale
-                                 )
+                             columns=to_scale
+                             )
     return df_scaled
+
 
 def process_kmeans_scaled(
         processed_data: pd.DataFrame | np.ndarray,
         cols_to_cluster: list,
-        clusters: int=5
+        clusters: int = 5
 ) -> pd.Series:
     """
     Scales the input dataframe (df), only based on the columns input
@@ -118,9 +121,10 @@ def process_kmeans_scaled(
         df = pd.DataFrame(processed_data)
     else:
         df = processed_data[cols_to_cluster]
-        assert set(cols_to_cluster).issubset(df.columns), f"Columns selected are not in dataframe.\
+        assert set(cols_to_cluster).issubset(df.columns), \
+            f"Columns selected are not in dataframe.\
             Missing {set(cols_to_cluster) - set(df.columns)}"
-    
+
     kmeans = KMeans(
         n_clusters=clusters,
         random_state=RAND_STATE,
@@ -134,11 +138,12 @@ def process_kmeans_scaled(
 
 def process_pca_scaled(
         df: pd.DataFrame,
-        cols_to_cluster: list=[],
-        n_pca: int=15
+        cols_to_cluster: list = [],
+        n_pca: int = 15
 ) -> np.ndarray:
     """
-    Applies principal component analysis to help reduce dimensionality of our dataframe
+    Applies principal component analysis to help
+    reduce dimensionality of our dataframe
 
     This takes in the dataframe df and applies PCA on the input number
     """
@@ -151,6 +156,7 @@ def process_pca_scaled(
 
     return processed_pca, pca_loadings
 
+
 def pca_explanation(
         pca_: np.ndarray,
         feature_names: list,
@@ -160,28 +166,30 @@ def pca_explanation(
     Helps explain the pca loadings by feature
     PCA objects give us an explanatory output worth noting:
         - pca.components_ - directions of maximum variance. Each component
-          is a vector, where the row is the component and the column is the original
+          is a vector, where the row is the
+          component and the column is the original
           feature.
             - SHAPE: (n_components, n_features)
-            - USE: The weights or loadings for each original feature as part of the PC
-                Higher weights indicate a feature has stronger influence on the PC
+            - USE: The weights/loadings of each original feature part of the PC
+                Higher weights indicate a stronger influence on the PC
     """
-    assert pca_.components_.shape[0] == n_pca, "Number of principal components from PCA object \
+    assert pca_.components_.shape[0] == n_pca, \
+        "Number of principal components from PCA object \
         doesn't match input number of components (`n_pca`)."
-    pca_loadings =pd.DataFrame(
+    pca_loadings = pd.DataFrame(
         pca_.components_.T,
         index=feature_names,
         columns=[f'PC{i+1}' for i in range(n_pca)]
     )
     return pca_loadings
-    
+
 
 def main(
         facility_location: str,
         property_location: str,
-        exclude_columns_to_scale: list=[],
-        n_pca: int=15,
-        k_cluster: int=5
+        exclude_columns_to_scale: list = [],
+        n_pca: int = 15,
+        k_cluster: int = 5
 ):
     """
     Builds all the pieces together to return a cluster of columns based on
@@ -189,13 +197,15 @@ def main(
 
     The assumption is we will scale our dataframe based on all columns
     - This will be all facilities and the property values
-    - If there are any columns to exclude, provide that as a list to the variable
+    - If there are any columns to exclude, provide that as a list
     """
-    df_facility, df_property_values = data_read(facility_location, property_location)
+    df_facility, df_property_values = data_read(
+        facility_location, property_location)
     df_property_values = process_property_value(df_property_values)
     df_facility = process_facility(df_facility)
     df_merged = merge_processed_df(df_facility, df_property_values)
-    df_scaled = process_scale_df(df_merged, exclude_columns=exclude_columns_to_scale)
+    df_scaled = process_scale_df(
+        df_merged, exclude_columns=exclude_columns_to_scale)
 
     scale_cols = df_merged.columns.to_list()
     # Apply PCA
@@ -207,10 +217,10 @@ def main(
 
     # Apply KMeans clustering on pca data
     kmeans_cluster = process_kmeans_scaled(
-            pca_composition,
-            cols_to_cluster=scale_cols,
-            clusters=k_cluster
-            )
+        pca_composition,
+        cols_to_cluster=scale_cols,
+        clusters=k_cluster
+    )
     print(f'Cluster shape: {kmeans_cluster.shape}')
     print(f'Scaled Dataframe shape: {df_scaled.shape}')
     print(f'PCA composition shape: {pca_composition.shape}')
@@ -222,7 +232,7 @@ def main(
     pca_composed_df['zip'] = df_merged['zip']
 
     # Merge PCA, clusters, and zip code as our training df
-    # Output the PCA decomposition as 
+    # Output the PCA decomposition as
     return pca_composed_df, pca_loadings
 
 
