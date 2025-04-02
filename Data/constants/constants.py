@@ -1,0 +1,1 @@
+RAND_STATE=42
