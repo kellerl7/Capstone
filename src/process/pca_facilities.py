@@ -4,12 +4,12 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-from data.constants.constants import RAND_STATE
+from src.constants import RAND_STATE
 
 
 def data_read(
-        public_facilities: str = "data/public_fac.csv",
-        property_values: str = "data/prop_values.csv"
+        public_facilities: str = "data/raw/public_fac.csv",
+        property_values: str = "data/raw/prop_values.csv"
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     df_facilities = pd.read_csv(public_facilities)
     df_prop_values = pd.read_csv(property_values)
@@ -25,7 +25,7 @@ def process_facility(
     and transforms it by performing a count
     per zipcode
 
-    inputs::
+    inputs:
       - df_facil: Dataframe that's the public facilities dataframe
 
     output:
@@ -53,10 +53,10 @@ def process_property_value(
     Takes in the dataframe from our dataread and processes
     how we need
 
-    inputs::
+    inputs:
       - df_prop: Dataframe of the poperty values
 
-    outputs::
+    outputs:
       - Processes the property value dataframe by aggregating by zipcode
         and averaging the market value
     """
@@ -238,8 +238,8 @@ def main(
 
 if __name__ == "__main__":
     pca_composed_df, pca_loadings = main(
-        facility_location="data/public_fac.csv",
-        property_location="data/prop_values.csv",
+        facility_location="data/raw/public_fac.csv",
+        property_location="data/raw/prop_values.csv",
         n_pca=15,
         k_cluster=5
     )

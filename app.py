@@ -21,7 +21,9 @@ with open('data/PUMA_nyc_2020.geojson', 'rb') as f:
 df_arrests = nyc_api_read(nyc_data.nyc_ARREST, limit=2700000)
 df_dog = nyc_api_read(nyc_data.nyc_DOG, limit=30000)  # interested - borough
 df_target = nyc_api_read(nyc_data.nyc_NFHDM, limit=5000)
-df_pricing = pd.read_parquet("data/nyc_rent_pricing.parquet.gzip", engine="pyarrow")
+df_pricing = pd.read_parquet(
+    "data/nyc_rent_pricing.parquet.gzip",
+    engine="pyarrow")
 
 """ ---------------------------------------------------------------
 DATA PREPROCESS
