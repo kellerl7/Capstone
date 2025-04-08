@@ -4,17 +4,15 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-from data.constants.constants import RAND_STATE
+from src.constants import RAND_STATE
 
 
 def data_read(
-        public_facilities: str = "data/public_fac.csv",
-        property_values: str = "data/prop_values.csv"
+        public_facilities: str = "data/raw/public_fac.csv",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     df_facilities = pd.read_csv(public_facilities)
-    df_prop_values = pd.read_csv(property_values)
 
-    return (df_facilities, df_prop_values)
+    return df_facilities
 
 
 def process_facility(
@@ -25,7 +23,7 @@ def process_facility(
     and transforms it by performing a count
     per zipcode
 
-    inputs::
+    inputs:
       - df_facil: Dataframe that's the public facilities dataframe
 
     output:
@@ -42,43 +40,9 @@ def process_facility(
     )
     df_facil_pivot = df_facil_pivot.fillna(0)
     df_facil_pivot['zip'] = df_facil_pivot.index
+    df_facil_pivot['zip'] = df_facil_pivot['zip'].astype(int).astype(str)
 
     return df_facil_pivot
-
-
-def process_property_value(
-        df_prop: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Takes in the dataframe from our dataread and processes
-    how we need
-
-    inputs::
-      - df_prop: Dataframe of the poperty values
-
-    outputs::
-      - Processes the property value dataframe by aggregating by zipcode
-        and averaging the market value
-    """
-    df_property_value = (df_prop[['zip', 'revised_market_value']]
-                         .groupby(by='zip')
-                         .mean())
-
-    return df_property_value
-
-
-def merge_processed_df(
-        df_fac: pd.DataFrame,
-        df_prop: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Takes in the processed data (from the process_* group)
-    and merges and scales the dataframes
-    """
-    facilities = df_fac.merge(df_prop, left_on='zip', right_on='zip')
-    facilities['zip'] = facilities['zip'].astype(int).astype(str)
-
-    return facilities
 
 
 def process_scale_df(
@@ -199,15 +163,13 @@ def main(
     - This will be all facilities and the property values
     - If there are any columns to exclude, provide that as a list
     """
-    df_facility, df_property_values = data_read(
-        facility_location, property_location)
-    df_property_values = process_property_value(df_property_values)
+    df_facility = data_read(
+        facility_location)
     df_facility = process_facility(df_facility)
-    df_merged = merge_processed_df(df_facility, df_property_values)
     df_scaled = process_scale_df(
-        df_merged, exclude_columns=exclude_columns_to_scale)
+        df_facility, exclude_columns=exclude_columns_to_scale)
 
-    scale_cols = df_merged.columns.to_list()
+    scale_cols = df_facility.columns.to_list()
     # Apply PCA
     pca_composition, pca_loadings = process_pca_scaled(
         df_scaled,
@@ -228,8 +190,7 @@ def main(
     pca_composed_df = pd.DataFrame(pca_composition)
     pca_composed_df.columns = [f'PC{i+1}' for i in range(n_pca)]
     pca_composed_df['cluster'] = kmeans_cluster
-    pca_composed_df['revised_market_value'] = df_merged['revised_market_value']
-    pca_composed_df['zip'] = df_merged['zip']
+    pca_composed_df['zip'] = df_facility['zip']
 
     # Merge PCA, clusters, and zip code as our training df
     # Output the PCA decomposition as
@@ -238,8 +199,7 @@ def main(
 
 if __name__ == "__main__":
     pca_composed_df, pca_loadings = main(
-        facility_location="data/public_fac.csv",
-        property_location="data/prop_values.csv",
+        facility_location="data/raw/public_fac.csv",
         n_pca=15,
         k_cluster=5
     )
