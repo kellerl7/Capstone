@@ -26,3 +26,6 @@ dependencies = [
     "socrata-py>=1.1.13",
     "sodapy>=2.2.0",
 ]
+
+[tool.uv]
+package = true
