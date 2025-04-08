@@ -1,7 +1,7 @@
 import pandas as pd
 
-from src.process.api_socrata import nyc_api_read
-import src.data_endpoints as nyc_data
+from process.api_socrata import nyc_api_read
+import data_endpoints as nyc_data
 
 """------------------------------------------------------------
 DATA READ

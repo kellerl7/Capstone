@@ -29,23 +29,6 @@ df_pricing = pd.read_parquet(
 DATA PREPROCESS
 -------------------------------------------------------------------"""
 
-# Dog bite
-df_dog['bite_date'] = pd.to_datetime(df_dog['dateofbite'])
-df_dog['bite_year'] = df_dog['bite_date'].dt.year
-
-# Summarize our data
-df_dog_summary = (df_dog
-                  .groupby([
-                      'bite_year',
-                      'borough'
-                  ])['species']
-                  .count()
-                  .reset_index()
-                  )
-df_dog_summary = df_dog_summary.rename(columns={'species': 'count'})
-years = df_dog_summary['bite_year'].unique().tolist()
-
-# ------------
 # Arrests
 # Key to map "arrest_boro"
 boro_key = pd.DataFrame(
