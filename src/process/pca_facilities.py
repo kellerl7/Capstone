@@ -192,7 +192,7 @@ def main(
     print(f'Shape of PCA: {pca_composed_df.shape}')
     print(f'Shape of facility dataframe: {df_facility.shape}')
     pca_composed_df['zip'] = pd.Series(df_facility['zip'].values, index=pca_composed_df.index)
-    df_facility['zip'] = pd.Series(pca_composed_df['cluster'].values, index=df_facility.index)
+    df_facility['cluster'] = pd.Series(pca_composed_df['cluster'].values, index=df_facility.index)
     # Merge PCA, clusters, and zip code as our training df
     # Output the PCA decomposition as
     return (pca_composed_df,
