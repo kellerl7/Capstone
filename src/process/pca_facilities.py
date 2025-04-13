@@ -209,6 +209,15 @@ if __name__ == "__main__":
     )
 
     # Write to processed:
-    pca_composed_df.to_csv('data/processed/pca_with_clusters.csv')
-    pca_loadings.to_csv('data/processed/pca_loadings.csv')
-    df_facility.to_csv('data/processed/facility_clustered.csv')
+    pca_composed_df.to_csv(
+        'data/processed/pca_with_clusters.csv',
+        index=False
+        )
+    pca_loadings.to_csv(
+        'data/processed/pca_loadings.csv',
+        index=False
+        )
+    df_facility.to_csv(
+        'data/processed/facility_clustered.csv',
+        index=False
+        )
