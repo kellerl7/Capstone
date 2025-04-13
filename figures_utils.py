@@ -12,14 +12,15 @@ def get_scattergeo(df):
     fig.add_trace(
         px.scatter_mapbox(
             df,
-            lat="Latitude", lon="Longitude",
+            lat="Latitude",
+            lon="Longitude",
             color="Best Rank",
             size=np.ones(len(df)),
             size_max=8,
             opacity=1
         ).data[0]
     )
-    fig.update_traces(hovertemplate=df['Info'])
+    fig.update_traces(hovertemplate=df['Cluster'])
 
     return fig
 
@@ -39,7 +40,7 @@ def get_Choropleth(
     fig.add_trace(
         go.choropleth(
             geojson=geo_data,
-            locations=df['zipcode'],
+            locations=df['zip'],
             featureidkey='properties.ZCTA5CE10',
             colorscale=arg['colorscale'],
             z=arg['z_vec'],
@@ -60,42 +61,40 @@ def get_Choropleth(
 def get_figure(
         df,
         geo_data,
-        region,
+        borough,
         gtype,
         year,
-        geo_sectors,
-        school,
-        schools_top_500,
+        geo_sectors
 ):
     """ref: https://plotly.com/python/builtin-colorscales/"""
     config = {"doubleClickDelay": 1000}  # set a high delay to make this easier
 
-    _cfg = cfg["plotly_config"][region]
+    _cfg = cfg["plotly_config"][borough]
 
     arg = dict()
-    if gtype == "Price":
-        arg["min_value"] = np.percentile(np.array(df.Price), 5)
-        arg["max_value"] = np.percentile(np.array(df.Price), _cfg["maxp"])
-        arg["z_vec"] = df["Price"]
-        arg["text_vec"] = df["text"]
+    if gtype == "Value":
+        arg["min_value"] = np.percentile(np.array(df.revised_market_value), 5)
+        arg["max_value"] = np.percentile(np.array(df.revised_market_value), _cfg["maxp"])
+        arg["z_vec"] = df["revised_market_value"]
+        arg["text_vec"] = df["revised_market_value"] #TODO: Revise
         arg["colorscale"] = "YlOrRd"
         arg["title"] = "Revised Market Value ($)"
 
-    elif gtype == "Volume":
-        arg["min_value"] = np.percentile(np.array(df.Volume), 5)
-        arg["max_value"] = np.percentile(np.array(df.Volume), 95)
-        arg["z_vec"] = df["Volume"]
-        arg["text_vec"] = df["text"]
+    elif gtype == "Facility":
+        arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
+        arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
+        arg["z_vec"] = df["Cluster"]
+        arg["text_vec"] = df["Cluster"] #TODO: Revise
         arg["colorscale"] = "Plasma"
-        arg["title"] = "Sales Volume"
+        arg["title"] = "Public Facility Grouping"
 
     else:
-        arg["min_value"] = np.percentile(np.array(df["Percentage Change"]), 10)
-        arg["max_value"] = np.percentile(np.array(df["Percentage Change"]), 90)
-        arg["z_vec"] = df["percentage Change"]
-        arg["text_vec"] = df["text"]
+        arg["min_value"] = np.percentile(np.array(df["arrest_count"]), 10)
+        arg["max_value"] = np.percentile(np.array(df["arrest_count"]), 90)
+        arg["z_vec"] = df["arrest_count"]
+        arg["text_vec"] = df["arrest_type"]
         arg["colorscale"] = "Picnic"
-        arg["title"] = "Avg. Price %Change"
+        arg["title"] = "Count of Arrests 1000' Away from Public Facility"
 
     # ----------------------------------------- #
     # Main Choropleth:
@@ -107,21 +106,6 @@ def get_figure(
         marker_line_width=1,
         marker_line_color="#6666cc",
     )
-
-    # ------------------------------------------ #
-    # School scatter_geo plot
-    if len(school) > 0:
-        fig.update_traces(showscale=False)
-        school_fig = get_scattergeo(schools_top_500)
-        fig.add_trace(school_fig.data[0])
-
-        fig.layout.coloraxis.colorbar.title = "School Ranking"
-        fig.layout.coloraxis.colorscale = px.colors.diverging.Portland
-        fig.layout.coloraxis.colorbar.tickvals = [
-            -10, -100, -200, -300, -400, -500]
-        fig.layout.coloraxis.colorbar.ticktext = [
-            f"Top {i}" for i in [1, 100, 200, 300, 400, 500]
-        ]
 
     # -------------------------------------------- #
     """
@@ -143,13 +127,13 @@ def get_figure(
         paper_bgcolor="#1f2630",
         mapbox_center={"lat": _cfg["center"][0],
                        "lon": _cfg["center"][1]},
-        uirevision=region,
+        uirevision=borough,
         margin={'r': 0, 't': 0, 'l': 0, 'b': 0},
     )
 
     # ------------------------------------------ #
     # Highlight selections:
-    if geo_sectors is not None and len(school) == 0:
+    if geo_sectors is not None:
         fig = get_Choropleth(
             df,
             geo_sectors,
