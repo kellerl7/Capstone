@@ -121,4 +121,4 @@ def main():
 
 if __name__ == "__main__":
     df_yearly_features = main()
-    df_yearly_features.to_csv('data/processed/features_by_year.csv')
+    df_yearly_features.to_csv('data/processed/features_by_year.csv', index=False)
