@@ -32,4 +32,4 @@ arrests_by_zip = (arrests_in_zips
 
 arrests_by_zip = arrests_by_zip.rename(columns={'ZCTA5CE10': 'zip'})
 
-arrests_by_zip.to_csv('arrests_outside_buffer_by_zip.csv')
+arrests_by_zip.to_csv('arrests_outside_buffer_by_zip.csv', index=False)
