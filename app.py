@@ -42,7 +42,8 @@ boroughs = [
 	"Staten Island",
 	"Brooklyn",
 	"Manhattan",
-	"Queens"
+	"Queens",
+	"NYC"
 ]
 
 colors = {"background": "#1F2630", "text": "#7FDBFF"}
@@ -81,15 +82,14 @@ summary_market_value = return_market_value()
 
 # initial values:
 initial_year = 2016
-initial_region = "Bronx"
+initial_borough = "NYC"
 
 borough_filter = summary_market_value.loc[
-	(
-		summary_market_value['year'] == initial_year
+	(summary_market_value['year'] == initial_year
 		) & (
-			summary_market_value['borough'] == initial_region
-			)]
-#initial_sector = random.choice(sectors)
+			summary_market_value['borough'] == initial_borough if initial_borough != 'NYC' else True
+			)]['zip']
+initial_zip = random.choice(borough_filter)
 #initial_geo_sector = [regional_geo_sector[initial_region][initial_sector]]
 
 empty_series = pd.DataFrame(np.full(len(cfg["Years"]), np.nan), index=cfg["Years"])
@@ -190,9 +190,9 @@ app.layout = html.Div(
 				html.Div(
 					[
 						dcc.Dropdown(
-							id="region",
+							id="borough",
 							options=[{"label": r, "value": r} for r in boroughs],
-							value=initial_region,
+							value=initial_borough,
 							clearable=False,
 							style={"color": "black"},
 						)
@@ -207,31 +207,15 @@ app.layout = html.Div(
 				html.Div(
 					[
 						dcc.Dropdown(
-							id="year",
-							options=[{"label": y, "value": y} for y in cfg["Years"]],
-							value=initial_year,
-							clearable=False,
-							style={"color": "black"},
-						),
-					],
-					style={
-						"display": "inline-block",
-						"padding": "0px 5px 10px 0px",
-						"width": "10%",
-					},
-					className="one columns",
-				),
-				html.Div(
-					[
-						dcc.Dropdown(
-							id="postcode",
+							id='zipcode',
 							options=[
 								{"label": s, "value": s}
-								for s in regional_price_data[initial_year][
-									initial_region
-								].Sector.values
+								for s in train_df.loc[
+									(train_df['year'] == initial_year) &
+									(train_df['borough'] == initial_borough if initial_borough != 'NYC' else True)
+									]['zip'].values
 							],
-							value=[initial_sector],
+							value=[initial_zip],
 							clearable=True,
 							multi=True,
 							style={"color": "black"},
@@ -250,9 +234,9 @@ app.layout = html.Div(
 							id="graph-type",
 							options=[
 								{"label": i, "value": i}
-								for i in ["Price", "Volume", "Yr-to-Yr price ±%"]
+								for i in ["Market Value", "Model Error", "Neighborhood Cluster"]
 							],
-							value="Price",
+							value="Market Value",
 							inline=True,
 						)
 					],
@@ -291,30 +275,6 @@ app.layout = html.Div(
 											},
 											className="eight columns",
 										),
-										html.Div(
-											[
-												dcc.Checklist(
-													id="school-checklist",
-													options=[
-														{
-															"label": "Show Top 500 Schools",  # noqa: E501
-															"value": "True",
-														},
-													],
-													value=[],
-													labelStyle={
-														"display": "inline-block"
-													},
-													inputStyle={"margin-left": "10px"},
-												)
-											],
-											style={
-												"display": "inline-block",
-												"textAlign": "right",
-												"width": "34%",
-											},
-											className="four columns",
-										),
 									]
 								),
 								dcc.Graph(id="choropleth"),
@@ -329,35 +289,35 @@ app.layout = html.Div(
 					className="seven columns",
 				),
 				# Right Column ------------------------------------#
-				html.Div(
-					id="graph-container",
-					children=[
-						html.Div(
-							[
-								dcc.Checklist(
-									id="property-type-checklist",
-									options=[
-										{"label": "F: Flats/Maisonettes", "value": "F"},
-										{"label": "T: Terraced", "value": "T"},
-										{"label": "S: Semi-Detached", "value": "S"},
-										{"label": "D: Detached", "value": "D"},
-									],
-									value=["F", "T", "S", "D"],
-									labelStyle={"display": "inline-block"},
-									inputStyle={"margin-left": "10px"},
-								),
-							],
-							style={"textAlign": "right"},
-						),
-						html.Div([dcc.Graph(id="price-time-series")]),
-					],
-					style={
-						"display": "inline-block",
-						"padding": "20px 20px 10px 10px",
-						"width": "39%",
-					},
-					className="five columns",
-				),
+				# html.Div(
+				# 	id="graph-container",
+				# 	children=[
+				# 		html.Div(
+				# 			[
+				# 				dcc.Checklist(
+				# 					id="property-type-checklist",
+				# 					options=[
+				# 						{"label": "F: Flats/Maisonettes", "value": "F"},
+				# 						{"label": "T: Terraced", "value": "T"},
+				# 						{"label": "S: Semi-Detached", "value": "S"},
+				# 						{"label": "D: Detached", "value": "D"},
+				# 					],
+				# 					value=["F", "T", "S", "D"],
+				# 					labelStyle={"display": "inline-block"},
+				# 					inputStyle={"margin-left": "10px"},
+				# 				),
+				# 			],
+				# 			style={"textAlign": "right"},
+				# 		),
+				# 		html.Div([dcc.Graph(id="price-time-series")]),
+				# 	],
+				# 	style={
+				# 		"display": "inline-block",
+				# 		"padding": "20px 20px 10px 10px",
+				# 		"width": "39%",
+				# 	},
+				# 	className="five columns",
+				# ),
 			],
 			className="row",
 		),
@@ -409,26 +369,20 @@ app.layout = html.Div(
 @app.callback(
 	Output("choropleth-title", "children"),
 	[
-		Input("region", "value"),
+		Input("borough", "value"),
 		Input("year", "value"),
 		Input("graph-type", "value"),
-		Input("school-checklist", "value"),
 	],
 )
-def update_map_title(region, year, gtype, school):
-	if len(school) > 0:
-		return "Top 500 schools (Postcode selection disabled)"
-	elif gtype == "Price":
-		return f"Avg house price (all property types) by postcode sector in {region}, {year}"  # noqa: E501
-	elif gtype == "Volume":
+def update_map_title(borough, year, gtype):
+	if gtype == "Market Value":
+		return f"Avg market value for properties in a given borough {borough}, {year}"
+	elif gtype == "Model Error":
 		return (
-			f"Sales Volume (all property types) by postcode sector in {region}, {year}"
+			f"Shows the average model error when predicting the market value in {borough}, {year}"
 		)
 	else:
-		if year == 1995:
-			return f"Data from {year - 1} to {year} not available"
-		else:
-			return f"Yr-to-yr average price % change in {region}, from {year - 1} to {year}"
+		return f"The given cluster breakdown for the different zipcodes in the borough {borough}, {year}"
 
 
 # Update postcode dropdown options with region selection

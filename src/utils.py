@@ -14,9 +14,6 @@ def get_train_df() -> pd.DataFrame:
     """
 
     df = pd.read_csv('data/model_inputs/model_input.csv')
-    df = df.set_index(
-        'year'
-    )
 
     return df
 
