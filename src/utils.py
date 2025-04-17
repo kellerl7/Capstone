@@ -40,5 +40,5 @@ def get_geo_json_zips():
     """
     Returns the json data associated with the zipcodes of New York City
     """
-    with ("data/raw/ny_new_york_zip_codes_geo.min.json", "rb") as file:
+    with open("data/raw/ny_new_york_zip_codes_geo.min.json", "rb") as file:
         return json.load(file)

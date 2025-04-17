@@ -6,8 +6,8 @@ import warnings
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import numpy as np
 import pandas as pd
 from dash.dependencies import Input, Output, State
@@ -77,7 +77,7 @@ Data Pre-processing
 ---------------------------------------------------------------------------- """
 train_df = get_train_df()
 summary_market_value = return_market_value()
-
+geo_zip_data = get_geo_json_zips()
 # ---------------------------------------------
 
 # initial values:
@@ -99,16 +99,17 @@ empty_series.rename(columns={0: ""}, inplace=True)
 """ ----------------------------------------------------------------------------
  Dash App
 ---------------------------------------------------------------------------- """
-# Select theme from: https://www.bootstrapcdn.com/bootswatch/
+# stylesheet with the .dbc class to style  dcc, DataTable and AG Grid components with a Bootstrap theme
+dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
+# if using the vizro theme
+vizro_bootstrap = "https://cdn.jsdelivr.net/gh/mckinsey/vizro@main/vizro-core/src/vizro/static/css/vizro-bootstrap.min.css?v=2"
 
-app = dash.Dash(
-	__name__,
-	meta_tags=[
-		{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
-	],
-	# external_stylesheets=[dbc.themes.DARKLY]
-	external_stylesheets=[dbc.themes.SUPERHERO],
-)
+app = dash.Dash(__name__, 
+				meta_tags=[
+                    {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
+				],
+				external_stylesheets=[vizro_bootstrap])
+
 
 server = app.server  # Needed for gunicorn
 cache = Cache(
@@ -210,9 +211,9 @@ app.layout = html.Div(
 							id='zipcode',
 							options=[
 								{"label": s, "value": s}
-								for s in train_df.loc[
-									(train_df['year'] == initial_year) &
-									(train_df['borough'] == initial_borough if initial_borough != 'NYC' else True)
+								for s in summary_market_value.loc[
+									(summary_market_value['year'] == initial_year) &
+									(summary_market_value['borough'] == initial_borough if initial_borough != 'NYC' else True)
 									]['zip'].values
 							],
 							value=[initial_zip],
@@ -385,14 +386,17 @@ def update_map_title(borough, year, gtype):
 		return f"The given cluster breakdown for the different zipcodes in the borough {borough}, {year}"
 
 
-# Update postcode dropdown options with region selection
+# Update zipcode dropdown options with region selection
 @app.callback(
-	Output("postcode", "options"), [Input("region", "value"), Input("year", "value")]
+	Output("zipcode", "options"), [Input("borough", "value"), Input("year", "value")]
 )
-def update_region_postcode(region, year):
+def update_region_postcode(borough, year):
 	return [
 		{"label": s, "value": s}
-		for s in regional_price_data[year][region].Sector.values
+		for s in summary_market_value.loc[		
+			(summary_market_value['year'] == year) &
+			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
+			]['zip'].values
 	]
 
 
@@ -401,123 +405,124 @@ def update_region_postcode(region, year):
 	Output("choropleth", "figure"),
 	[
 		Input("year", "value"),
-		Input("region", "value"),
+		Input("borough", "value"),
 		Input("graph-type", "value"),
-		Input("postcode", "value"),
-		Input("school-checklist", "value"),
+		Input("zipcode", "value"),
 	],
 )  # @cache.memoize(timeout=cfg['timeout'])
-def update_Choropleth(year, region, gtype, sectors, school):
+def update_Choropleth(year, borough, gtype, zips):
 	# Graph type selection------------------------------#
-	if gtype in ["Price", "Volume"]:
-		df = regional_price_data[year][region]
+	# Graph options: "Market Value", "Model Error", "Neighborhood Cluster"
+	if gtype in ["Market Value", "Neighborhood Cluster"]:
+		df = summary_market_value.loc[
+			(summary_market_value['year'] == year) &
+			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
+		]
 	else:
+		#TODO: Switch dataset to model output to graph error
 		df = regional_percentage_delta_data[year][region]
 
 	# For high-lighting mechanism ----------------------#
 	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
 	geo_sectors = dict()
 
-	if "region" not in changed_id:
-		for k in regional_geo_data[region].keys():
-			if k != "features":
-				geo_sectors[k] = regional_geo_data[region][k]
-			else:
-				geo_sectors[k] = [
-					regional_geo_sector[region][sector]
-					for sector in sectors
-					if sector in regional_geo_sector[region]
-				]
+	# if "borough" not in changed_id:
+	# 	for k in regional_geo_data[region].keys():
+	# 		if k != "features":
+	# 			geo_sectors[k] = regional_geo_data[region][k]
+	# 		else:
+	# 			geo_sectors[k] = [
+	# 				regional_geo_sector[region][sector]
+	# 				for sector in sectors
+	# 				if sector in regional_geo_sector[region]
+	# 			]
 
 	# Updating figure ----------------------------------#
 	fig = get_figure(
 		df,
-		app.get_asset_url(regional_geo_data_paths[region]),
-		region,
+		geo_zip_data,
+		borough,
 		gtype,
 		year,
-		geo_sectors,
-		school,
-		schools_top_500,
+		geo_sectors
 	)
 
 	return fig
 
 
-# Update price-time-series with postcode updates and graph-type
-@app.callback(
-	Output("price-time-series", "figure"),
-	[Input("postcode", "value"), Input("property-type-checklist", "value")],
-)
-@cache.memoize(timeout=cfg["timeout"])
-def update_price_timeseries(sectors, ptypes):
-	if len(sectors) == 0:
-		return price_ts(empty_series, "Please select postcodes", colors)
+# # Update price-time-series with postcode updates and graph-type
+# @app.callback(
+# 	Output("price-time-series", "figure"),
+# 	[Input("postcode", "value"), Input("property-type-checklist", "value")],
+# )
+# @cache.memoize(timeout=cfg["timeout"])
+# def update_price_timeseries(sectors, ptypes):
+# 	if len(sectors) == 0:
+# 		return price_ts(empty_series, "Please select postcodes", colors)
 
-	if len(ptypes) == 0:
-		return price_ts(
-			empty_series, "Please select at least one property type", colors
-		)
+# 	if len(ptypes) == 0:
+# 		return price_ts(
+# 			empty_series, "Please select at least one property type", colors
+# 		)
 
-	# --------------------------------------------------#
-	df = price_volume_df.iloc[
-		np.isin(price_volume_df.index.get_level_values("Property Type"), ptypes),
-		np.isin(price_volume_df.columns.get_level_values("Sector"), sectors),
-	]
-	df.reset_index(inplace=True)
-	avg_price_df = get_average_price_by_year(df, sectors)
+# 	# --------------------------------------------------#
+# 	df = price_volume_df.iloc[
+# 		np.isin(price_volume_df.index.get_level_values("Property Type"), ptypes),
+# 		np.isin(price_volume_df.columns.get_level_values("Sector"), sectors),
+# 	]
+# 	df.reset_index(inplace=True)
+# 	avg_price_df = get_average_price_by_year(df, sectors)
 
-	if len(sectors) == 1:
-		index = [(a, b) for (a, b) in df.columns if a != "Average Price"]
-		volume_df = df[index]
-		volume_df.columns = volume_df.columns.get_level_values(0)
-		return price_volume_ts(avg_price_df, volume_df, sectors, colors)
-	else:
-		title = f"Average prices for {len(sectors)} sectors"
-		return price_ts(avg_price_df, title, colors)
+# 	if len(sectors) == 1:
+# 		index = [(a, b) for (a, b) in df.columns if a != "Average Price"]
+# 		volume_df = df[index]
+# 		volume_df.columns = volume_df.columns.get_level_values(0)
+# 		return price_volume_ts(avg_price_df, volume_df, sectors, colors)
+# 	else:
+# 		title = f"Average prices for {len(sectors)} sectors"
+# 		return price_ts(avg_price_df, title, colors)
 
 
 # ----------------------------------------------------#
 
 
 # Update postcode dropdown values with clickData, selectedData and region
-@app.callback(
-	Output("postcode", "value"),
-	[
-		Input("choropleth", "clickData"),
-		Input("choropleth", "selectedData"),
-		Input("region", "value"),
-		Input("school-checklist", "value"),
-		State("postcode", "value"),
-		State("choropleth", "clickData"),
-	],
-)
-def update_postcode_dropdown(
-	clickData, selectedData, region, school, postcodes, clickData_state
-):
-	# Logic for initialisation or when Schoold sre selected
-	if dash.callback_context.triggered[0]["value"] is None:
-		return postcodes
+# @app.callback(
+# 	Output("zipcode", "value"),
+# 	[
+# 		Input("choropleth", "clickData"),
+# 		Input("choropleth", "selectedData"),
+# 		Input("borough", "value"),
+# 		State("zipcode", "value"),
+# 		State("choropleth", "clickData"),
+# 	],
+# )
+# def update_postcode_dropdown(
+# 	clickData, selectedData, borough, zipcodes, clickData_state
+# ):
+# 	# Logic for initialisation or when Schoold sre selected
+# 	if dash.callback_context.triggered[0]["value"] is None:
+# 		return zipcodes
 
-	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
+# 	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
-	if len(school) > 0 or "school" in changed_id:
-		clickData_state = None
-		return []
+# 	if len(zipcodes) > 0 or "zipcode" in changed_id:
+# 		clickData_state = None
+# 		return []
 
-	# --------------------------------------------#
+# 	# --------------------------------------------#
 
-	if "region" in changed_id:
-		postcodes = []
-	elif "selectedData" in changed_id:
-		postcodes = [D["location"] for D in selectedData["points"][: cfg["topN"]]]
-	elif clickData is not None and "location" in clickData["points"][0]:
-		sector = clickData["points"][0]["location"]
-		if sector in postcodes:
-			postcodes.remove(sector)
-		elif len(postcodes) < cfg["topN"]:
-			postcodes.append(sector)
-	return postcodes
+# 	if "borough" in changed_id:
+# 		zipcodes = []
+# 	elif "selectedData" in changed_id:
+# 		zipcodes = [D["location"] for D in selectedData["points"][: cfg["topN"]]]
+# 	elif clickData is not None and "location" in clickData["points"][0]:
+# 		sector = clickData["points"][0]["location"]
+# 		if sector in postcodes:
+# 			postcodes.remove(sector)
+# 		elif len(postcodes) < cfg["topN"]:
+# 			postcodes.append(sector)
+# 	return postcodes
 
 
 # ----------------------------------------------------#
