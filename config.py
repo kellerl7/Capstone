@@ -60,11 +60,11 @@ config = {
             "maxp": 99,
             "zoom": 6.5
         },
-
-        "logging format": """
-        pid %(process)5s [%(asctime)s] %(levelname)8s: %(message)s
-        """
-    }
+    }, 
+        
+    "logging format": """
+    pid %(process)5s [%(asctime)s] %(levelname)8s: %(message)s
+    """
 
 }
 

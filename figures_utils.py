@@ -72,7 +72,7 @@ def get_figure(
     _cfg = cfg["plotly_config"][borough]
 
     arg = dict()
-    if gtype == "Value":
+    if gtype == "Market Value":
         arg["min_value"] = np.percentile(np.array(df.revised_market_value), 5)
         arg["max_value"] = np.percentile(np.array(df.revised_market_value), _cfg["maxp"])
         arg["z_vec"] = df["revised_market_value"]
@@ -80,11 +80,11 @@ def get_figure(
         arg["colorscale"] = "YlOrRd"
         arg["title"] = "Revised Market Value ($)"
 
-    elif gtype == "Facility":
-        arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
-        arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
-        arg["z_vec"] = df["Cluster"]
-        arg["text_vec"] = df["Cluster"] #TODO: Revise
+    elif gtype == "Neighborhood Cluster":
+        arg["min_value"] = np.percentile(np.array(df.cluster), 5)
+        arg["max_value"] = np.percentile(np.array(df.cluster), 95)
+        arg["z_vec"] = df["cluster"]
+        arg["text_vec"] = df["cluster"] #TODO: Revise
         arg["colorscale"] = "Plasma"
         arg["title"] = "Public Facility Grouping"
 
