@@ -38,28 +38,33 @@ config = {
         "Staten Island": {
             "center": [40.579, -74.151],
             "maxp": 99,
-            "zoom": 6.5
+            "zoom": 10
         },
         "Bronx": {
             "center": [40.837, -73.865],
             "maxp": 99,
-            "zoom": 6.5
+            "zoom": 10
         },
         "Queens": {
             "center": [40.742, -73.769],
             "maxp": 99,
-            "zoom": 6.5
+            "zoom": 10
         },
         "Manhattan": {
             "center": [40.777, -73.971],
             "maxp": 99,
-            "zoom": 6.5
+            "zoom": 10
         },
         "Brooklyn": {
             "center": [40.650, -73.950],
             "maxp": 99,
-            "zoom": 6.5
+            "zoom": 10
         },
+        "NYC": {
+            "center": [40.705, -74.0105],
+            "maxp": 99,
+            "zoom": 10
+        }
     }, 
         
     "logging format": """
