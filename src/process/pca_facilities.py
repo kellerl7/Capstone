@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-from src.constants import RAND_STATE
+from constants import RAND_STATE
 
 
 def data_read(
@@ -150,7 +150,6 @@ def pca_explanation(
 
 def main(
         facility_location: str,
-        property_location: str,
         exclude_columns_to_scale: list = [],
         n_pca: int = 15,
         k_cluster: int = 5
@@ -169,7 +168,7 @@ def main(
     df_scaled = process_scale_df(
         df_facility, exclude_columns=exclude_columns_to_scale)
 
-    scale_cols = df_facility.columns.to_list()
+    scale_cols = df_scaled.columns.to_list()
     # Apply PCA
     pca_composition, pca_loadings = process_pca_scaled(
         df_scaled,
@@ -190,16 +189,35 @@ def main(
     pca_composed_df = pd.DataFrame(pca_composition)
     pca_composed_df.columns = [f'PC{i+1}' for i in range(n_pca)]
     pca_composed_df['cluster'] = kmeans_cluster
-    pca_composed_df['zip'] = df_facility['zip']
-
+    print(f'Shape of PCA: {pca_composed_df.shape}')
+    print(f'Shape of facility dataframe: {df_facility.shape}')
+    pca_composed_df['zip'] = pd.Series(df_facility['zip'].values, index=pca_composed_df.index)
+    df_facility['cluster'] = pd.Series(pca_composed_df['cluster'].values, index=df_facility.index)
     # Merge PCA, clusters, and zip code as our training df
     # Output the PCA decomposition as
-    return pca_composed_df, pca_loadings
+    return (pca_composed_df,
+            pca_loadings,
+            df_facility)
 
 
 if __name__ == "__main__":
-    pca_composed_df, pca_loadings = main(
+    pca_composed_df, pca_loadings, df_facility = main(
         facility_location="data/raw/public_fac.csv",
         n_pca=15,
-        k_cluster=5
+        k_cluster=5,
+        exclude_columns_to_scale=['zip']
     )
+
+    # Write to processed:
+    pca_composed_df.to_csv(
+        'data/processed/pca_with_clusters.csv',
+        index=False
+        )
+    pca_loadings.to_csv(
+        'data/processed/pca_loadings.csv',
+        index=False
+        )
+    df_facility.to_csv(
+        'data/processed/facility_clustered.csv',
+        index=False
+        )

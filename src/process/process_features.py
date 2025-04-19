@@ -46,6 +46,7 @@ def process_dog_bite(
 ) -> pd.DataFrame:
     df_dog_bite['bite_date'] = pd.to_datetime(df_dog_bite['dateofbite'])
     df_dog_bite['bite_year'] = df_dog_bite['bite_date'].dt.year
+    df_dog_bite['bite_myear'] = df_dog_bite['bite_date'].dt.to_period('M')
 
     df_bite_summary = (
         df_dog_bite
@@ -120,4 +121,4 @@ def main():
 
 if __name__ == "__main__":
     df_yearly_features = main()
-    df_yearly_features.to_csv('data/processed/features_by_year.csv')
+    df_yearly_features.to_csv('data/processed/features_by_year.csv', index=False)
