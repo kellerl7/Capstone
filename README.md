@@ -8,7 +8,8 @@ git clone https://github.com/kellerl7/Capstone.git nyc-public-facilities
 cd nyc-public-facilities
 ```
 ### Prerequisites
-- 🚀 Python 3.12+ support
+- 🚀 Python 3.10 support
+- 👾 Model development through the use of PyCaret
 - 📦 Fast dependency management with uv
 - 📊 Interactive visualization through Dash and Plotly
 
