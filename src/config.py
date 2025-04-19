@@ -63,7 +63,7 @@ config = {
         "NYC": {
             "center": [40.705, -74.0105],
             "maxp": 99,
-            "zoom": 10
+            "zoom": 9
         }
     }, 
         

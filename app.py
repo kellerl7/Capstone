@@ -25,6 +25,8 @@ from utils import (
 	return_market_value,
 	get_pca_with_clusters,
 	get_geo_json_zips,
+	get_borough_zips,
+	get_borough_geo_zips,
 )
 
 warnings.filterwarnings("ignore")
@@ -78,17 +80,15 @@ Data Pre-processing
 train_df = get_train_df()
 summary_market_value = return_market_value()
 geo_zip_data = get_geo_json_zips()
+zip_dict = get_borough_zips()
+geo_zip_key_data = get_borough_geo_zips(geo_zip_data)
 # ---------------------------------------------
 
 # initial values:
 initial_year = 2016
 initial_borough = "NYC"
 
-borough_filter = summary_market_value.loc[
-	(summary_market_value['year'] == initial_year
-		) & (
-			summary_market_value['borough'] == initial_borough if initial_borough != 'NYC' else True
-			)]['zip']
+borough_filter = zip_dict[initial_borough]
 initial_zip = random.choice(borough_filter)
 #initial_geo_sector = [regional_geo_sector[initial_region][initial_sector]]
 
@@ -211,10 +211,7 @@ app.layout = html.Div(
 							id='zipcode',
 							options=[
 								{"label": s, "value": s}
-								for s in summary_market_value.loc[
-									(summary_market_value['year'] == initial_year) &
-									(summary_market_value['borough'] == initial_borough if initial_borough != 'NYC' else True)
-									]['zip'].values
+								for s in zip_dict[initial_borough]
 							],
 							value=[initial_zip],
 							clearable=True,
@@ -371,32 +368,31 @@ app.layout = html.Div(
 	Output("choropleth-title", "children"),
 	[
 		Input("borough", "value"),
-		Input("year", "value"),
 		Input("graph-type", "value"),
 	],
 )
-def update_map_title(borough, year, gtype):
+def update_map_title(borough, gtype):
 	if gtype == "Market Value":
-		return f"Avg market value for properties in a given borough {borough}, {year}"
+		return f"Avg market value for properties in a given borough {borough}, {initial_year}"
 	elif gtype == "Model Error":
 		return (
-			f"Shows the average model error when predicting the market value in {borough}, {year}"
+			f"Shows the average model error when predicting the market value in {borough}, {initial_year}"
 		)
 	else:
-		return f"The given cluster breakdown for the different zipcodes in the borough {borough}, {year}"
+		return f"The given cluster breakdown for the different zipcodes in the borough {borough}, {initial_year}"
 
 
 # Update zipcode dropdown options with region selection
 @app.callback(
-	Output("zipcode", "options"), [Input("borough", "value"), Input("year", "value")]
+	Output("zipcode", "options"),
+	[
+		Input("borough", "value"),
+	]
 )
-def update_region_postcode(borough, year):
+def update_region_postcode(borough):
 	return [
 		{"label": s, "value": s}
-		for s in summary_market_value.loc[		
-			(summary_market_value['year'] == year) &
-			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
-			]['zip'].values
+		for s in zip_dict[borough]
 	]
 
 
@@ -404,38 +400,40 @@ def update_region_postcode(borough, year):
 @app.callback(
 	Output("choropleth", "figure"),
 	[
-		Input("year", "value"),
 		Input("borough", "value"),
 		Input("graph-type", "value"),
 		Input("zipcode", "value"),
 	],
 )  # @cache.memoize(timeout=cfg['timeout'])
-def update_Choropleth(year, borough, gtype, zips):
+def update_Choropleth(borough, gtype, zips):
 	# Graph type selection------------------------------#
 	# Graph options: "Market Value", "Model Error", "Neighborhood Cluster"
 	if gtype in ["Market Value", "Neighborhood Cluster"]:
 		df = summary_market_value.loc[
-			(summary_market_value['year'] == year) &
+			(summary_market_value['year'] == initial_year) &
 			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
 		]
 	else:
 		#TODO: Switch dataset to model output to graph error
-		df = regional_percentage_delta_data[year][region]
+		#df = regional_percentage_delta_data[year][region]
+		pass
 
 	# For high-lighting mechanism ----------------------#
 	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
 	geo_sectors = dict()
 
-	# if "borough" not in changed_id:
-	# 	for k in regional_geo_data[region].keys():
-	# 		if k != "features":
-	# 			geo_sectors[k] = regional_geo_data[region][k]
-	# 		else:
-	# 			geo_sectors[k] = [
-	# 				regional_geo_sector[region][sector]
-	# 				for sector in sectors
-	# 				if sector in regional_geo_sector[region]
-	# 			]
+	# If we are still looking at the same borough,
+	# Update our list and zipcodes to highlight
+	# Use our geojson by zip to get a filtered list ready by our filter
+	if "borough" not in changed_id:
+		for k in geo_zip_data.keys():
+			if k != "features":
+				geo_sectors[k] = geo_zip_data[k]
+			else:
+				geo_sectors[k] = [
+					geo_zip_key_data[z]
+					for z in zips
+				]
 
 	# Updating figure ----------------------------------#
 	fig = get_figure(
@@ -443,7 +441,7 @@ def update_Choropleth(year, borough, gtype, zips):
 		geo_zip_data,
 		borough,
 		gtype,
-		year,
+		initial_year, # placeholder if we want to change years later
 		geo_sectors
 	)
 
@@ -487,42 +485,43 @@ def update_Choropleth(year, borough, gtype, zips):
 
 
 # Update postcode dropdown values with clickData, selectedData and region
-# @app.callback(
-# 	Output("zipcode", "value"),
-# 	[
-# 		Input("choropleth", "clickData"),
-# 		Input("choropleth", "selectedData"),
-# 		Input("borough", "value"),
-# 		State("zipcode", "value"),
-# 		State("choropleth", "clickData"),
-# 	],
-# )
-# def update_postcode_dropdown(
-# 	clickData, selectedData, borough, zipcodes, clickData_state
-# ):
-# 	# Logic for initialisation or when Schoold sre selected
-# 	if dash.callback_context.triggered[0]["value"] is None:
-# 		return zipcodes
+@app.callback(
+	Output("zipcode", "value"),
+	[
+		Input("choropleth", "clickData"),
+		Input("choropleth", "selectedData"),
+		Input("borough", "value"),
+		State("zipcode", "value"),
+		State("choropleth", "clickData"),
+	],
+)
+def update_zipcode_dropdown(
+	clickData, selectedData, borough, zipcodes, clickData_state
+):
+	# Logic for initialisation or when Schoold sre selected
+	if dash.callback_context.triggered[0]["value"] is None:
+		return zipcodes
 
-# 	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
+	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
-# 	if len(zipcodes) > 0 or "zipcode" in changed_id:
-# 		clickData_state = None
-# 		return []
+	if len(zipcodes) > 0 or "zipcode" in changed_id:
+		clickData_state = None
+		return []
 
-# 	# --------------------------------------------#
-
-# 	if "borough" in changed_id:
-# 		zipcodes = []
-# 	elif "selectedData" in changed_id:
-# 		zipcodes = [D["location"] for D in selectedData["points"][: cfg["topN"]]]
-# 	elif clickData is not None and "location" in clickData["points"][0]:
-# 		sector = clickData["points"][0]["location"]
-# 		if sector in postcodes:
-# 			postcodes.remove(sector)
-# 		elif len(postcodes) < cfg["topN"]:
-# 			postcodes.append(sector)
-# 	return postcodes
+	# --------------------------------------------#
+	print(f"clickData: {clickData['points']}")
+	if "borough" in changed_id:
+		zipcodes = []
+	elif "selectedData" in changed_id:
+		zipcodes = [D["location"] for D in selectedData["points"][: cfg["topN"]]]
+	elif clickData is not None and "location" in clickData["points"][0]:
+		z = clickData["points"][0]["location"]
+		if z in zipcodes:
+			zipcodes.remove(z)
+		elif len(zipcodes) < cfg["topN"]:
+			zipcodes.append(z)
+	print(f"EOF zipcode list: {zipcodes}")
+	return zipcodes
 
 
 # ----------------------------------------------------#
@@ -543,7 +542,7 @@ if __name__ == "__main__":
 
 	# If running on AWS/Pythonanywhere production
 	else:
-		app.run_server(port=8050, host="0.0.0.0")
+		app.run_server(port=8050, host="0.0.0.0", debug=True)
 
 """ ----------------------------------------------------------------------------
 Terminal cmd to run:

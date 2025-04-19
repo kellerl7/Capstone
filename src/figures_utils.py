@@ -103,7 +103,7 @@ def get_figure(
         df,
         geo_data,
         arg,
-        marker_opacity=1,
+        marker_opacity=0.4,
         marker_line_width=1,
         marker_line_color="#6666cc",
     )
@@ -121,14 +121,14 @@ def get_figure(
     """
 
     fig.update_layout(
-        map_style='carto-positron-nolabels',
+        map_style='carto-voyager-nolabels',
         map_zoom=_cfg["zoom"],
         autosize=True,
         font=dict(color="#7FDBFF"),
         paper_bgcolor="#1f2630",
         map_center={"lat": _cfg["center"][0],
                        "lon": _cfg["center"][1]},
-        uirevision=borough,
+        #uirevision=borough,
         margin={'r': 0, 't': 0, 'l': 0, 'b': 0},
     )
 
