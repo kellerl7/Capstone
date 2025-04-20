@@ -121,7 +121,7 @@ def get_figure(
     """
 
     fig.update_layout(
-        map_style='carto-voyager-nolabels',
+        map_style='light',
         map_zoom=_cfg["zoom"],
         autosize=True,
         font=dict(color="#7FDBFF"),

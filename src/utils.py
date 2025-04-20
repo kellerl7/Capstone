@@ -6,38 +6,23 @@ from collections import defaultdict
 
 from config import config as cfg
 
-def get_train_df(
+def get_model_input_df(
         file_loc: str='data/model_inputs/model_input.csv'
         ) -> pd.DataFrame:
     """
     Returns a dataframe that is based on the input dataframe to our model
 
     Expected location:
-    -- data/model_inputs/model_input_output.csv
+    -- data/model_inputs/model_input.csv
 
     Returns:
     -- Dataframe with our target, predicted target, and inputs
     """
 
     df = pd.read_csv(file_loc)
+    df['zip'] = df['zip'].astype(int).astype(str)
 
     return df
-
-def return_market_value():
-    df = get_train_df()
-    df_market_value = (
-        df
-        .groupby(
-            ['year', 'zip', 'borough']
-            )[['revised_market_value', 'cluster']]
-        .mean()
-        .reset_index()
-    )
-
-    if df_market_value['zip'].dtype == 'int64':
-        df_market_value['zip'] = df_market_value['zip'].astype(str)
-
-    return df_market_value
 
 def get_pca_with_clusters() -> pd.DataFrame:
     """
@@ -112,7 +97,3 @@ def get_borough_zips(file_loc: str='data/raw/zip_borough.csv') -> dict:
     # Convert defaultdict to regular dict if needed
     borough_zipcodes = dict(borough_zipcodes)
     return borough_zipcodes
-
-## TEST
-#geo_data =get_geo_json_zips()
-#zip_geo_data = get_borough_geo_zips(geo_data, "-")

@@ -44,7 +44,14 @@ def process_arrests(file_loc: str, output_loc: str, source: str=['url', 'api']):
 
     arrests_by_zip = arrests_by_zip.rename(columns={'ZCTA5CE10': 'zip'})
 
-    arrests_by_zip.to_csv(output_loc, index=False)
+    # Spread our answer so we have one metric per zipcode
+    arrests_by_zip_pivot = arrests_by_zip.pivot_table(
+        index=['arrest_year', 'zip'],
+        columns='law_cat_cd',
+        values='count',
+        fill_value=0
+    ).reset_index()
+    arrests_by_zip_pivot.to_csv(output_loc, index=False)
 
     return arrests_by_zip
 
