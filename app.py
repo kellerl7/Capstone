@@ -21,8 +21,7 @@ from figures_utils import (
 	price_volume_ts,
 )
 from utils import (
-	get_train_df,
-	return_market_value,
+	get_model_input_df,
 	get_pca_with_clusters,
 	get_geo_json_zips,
 	get_borough_zips,
@@ -52,24 +51,20 @@ colors = {"background": "#1F2630", "text": "#7FDBFF"}
 
 NOTES = """
     **Notes:**
-    1. Property type "Other" is filtered from the house price data.
-    2. School ranking (2018-2019) is the best of GCSE and A-Level rankings.
-    3. GCSE ranking can be misleading - subjects like
-    Classics and Latin are excluded from scoring,
-    unfairly penalising some schools.
+    1. All data shown is for the year 2016 due to limitation of Market Value Data
+    2. Arrest data is shown for area 1000' outside any facility noted as "public"
+    3. Data is absolute and not normalized for population or any other metric
+	4. Template and base design inspired by: 
+	[ivanlai - UK Housing prices](https://github.com/ivanlai/Plotly-App-UK-houseprices)
 
     **Other data sources:**
     - [OpenStreetMap](https://www.openstreetmap.org)
-    - [Postcode regions mapping](https://www.whichlist2.com/knowledgebase/uk-postcode-map/)
-    - [Postcode boundary data](https://www.opendoorlogistics.com/data/)
-    from [www.opendoorlogistics.com](https://www.opendoorlogistics.com)
-    - Contains Royal Mail data © Royal Mail copyright and database right 2015
-    - Contains National Statistics data © Crown copyright and database right 2015
-    - [School 2019 performance data](https://www.gov.uk/school-performance-tables)
-    (Ranking scores: [Attainment 8 Score](https://www.locrating.com/Blog/attainment-8-and-progress-8-explained.aspx)
-    for GCSE and
-    [Average Point Score](https://dera.ioe.ac.uk/26476/3/16_to_18_calculating_the_average_point_scores_2015.pdf)
-    for A-Level)
+    - [NYC Zipcode data](https://github.com/OpenDataDE/State-zip-code-GeoJSON)
+    - [NYC Zipcode and Borough data](https://www.nycbynatives.com/nyc_info/new_york_city_zip_codes.php)
+    from NYC By Natives
+    - [NYC Arrest data](https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u/about_data)
+    - [NYC Property Value data](https://data.cityofnewyork.us/City-Government/Revised-Notice-of-Property-Value-RNOPV-/8vgb-zm6e/about_data)
+	- [NYC Facility Information](https://data.cityofnewyork.us/City-Government/Facilities-Database/ji82-xba5/about_data)
 """
 
 t0 = time.time()
@@ -77,8 +72,7 @@ t0 = time.time()
 """ ----------------------------------------------------------------------------
 Data Pre-processing
 ---------------------------------------------------------------------------- """
-train_df = get_train_df()
-summary_market_value = return_market_value()
+summary_market_value = get_model_input_df()
 geo_zip_data = get_geo_json_zips()
 zip_dict = get_borough_zips()
 geo_zip_key_data = get_borough_geo_zips(geo_zip_data)
@@ -177,8 +171,8 @@ app.layout = html.Div(
 		html.Div(
 			[
 				dcc.Link(
-					f"HM Land Registry Price Paid Data from 01 Jan 1995 to {cfg['latest date']}",  # noqa: E501
-					href="https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",  # noqa: E501
+					"A property's market value as of 2016",  # noqa: E501
+					href="https://data.cityofnewyork.us/City-Government/Revised-Notice-of-Property-Value-RNOPV-/8vgb-zm6e/about_data",  # noqa: E501
 					target="_blank",
 					# style={'color': colors['text']}
 				)
@@ -334,9 +328,8 @@ app.layout = html.Div(
 				html.Div(
 					[
 						dcc.Markdown(
-							"© 2020 Ivan Lai "
-							+ "[[Blog]](https://www.ivanlai.project-ds.net/) "
-							+ "[[Email]](mailto:ivanlai.uk.2020@gmail.com)"
+							"University of Michigan - Masters of Data Science Project |"
+							+ "[Github link](https://github.com/kellerl7/Capstone) "
 						)
 					],
 					style={
@@ -504,12 +497,7 @@ def update_zipcode_dropdown(
 
 	changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
-	if len(zipcodes) > 0 or "zipcode" in changed_id:
-		clickData_state = None
-		return []
-
 	# --------------------------------------------#
-	print(f"clickData: {clickData['points']}")
 	if "borough" in changed_id:
 		zipcodes = []
 	elif "selectedData" in changed_id:
@@ -520,7 +508,6 @@ def update_zipcode_dropdown(
 			zipcodes.remove(z)
 		elif len(zipcodes) < cfg["topN"]:
 			zipcodes.append(z)
-	print(f"EOF zipcode list: {zipcodes}")
 	return zipcodes
 
 
