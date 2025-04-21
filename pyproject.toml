@@ -3,24 +3,30 @@ name = "nyc-capstone"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
+    "dash-bootstrap-components>=1.7.1",
     "dash>=2.18.2",
     "fastparquet>=2024.11.0",
+    "flask-caching>=2.3.1",
     "folium>=0.19.5",
     "geopandas>=1.0.1",
-    "git-filter-repo>=2.47.0",
-    "ipython>=9.0.2",
+    "ipython>=8.35.0",
     "jupyter>=1.1.1",
     "jupyterlab>=4.3.6",
     "mapclassify>=2.8.1",
-    "matplotlib>=3.10.1",
-    "numpy>=2.2.3",
-    "pandas>=2.2.3",
-    "polars>=1.22.0",
+    "matplotlib<3.8.0",
+    "numpy>=1.21",
+    "pandas>=2.1.4",
     "pyarrow>=19.0.1",
+    "pycaret>=3.3.2",
     "requests>=2.32.3",
     "ruff>=0.11.1",
-    "socrata-py>=1.1.13",
+    "scikit-learn>=1.4,<1.5",
+    "seaborn>=0.13.2",
     "sodapy>=2.2.0",
 ]
+
+[tool.uv]
+package = true
+constraint-dependencies = ['kaleido!=0.2.1post1']

@@ -13,3 +13,7 @@ wheels/
 .python-version
 .DS_Store
 .vscode/launch.json
+<<<<<<< HEAD
+=======
+Supervised/logs.log
+>>>>>>> 07e99e5e25bf752a392f52e62487bdc2d2d8bb25
