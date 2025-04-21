@@ -74,9 +74,11 @@ def get_borough_geo_zips(geo_json_zips):
     return borough_geo_zips
 
 
-def get_borough_zips(file_loc: str='data/raw/zip_borough.csv') -> dict:
+def get_borough_zips(
+        nyc_zips_geojson: dict,
+        file_loc: str='data/raw/zip_borough.csv') -> dict:
     """
-    Returns a dictionary of:
+    Returns a dictionary of all zips with a geojson reference:
       key: borough (NYC will be the "borough" for all zips)
       value: [list of all zipcodes]
     """
@@ -84,6 +86,7 @@ def get_borough_zips(file_loc: str='data/raw/zip_borough.csv') -> dict:
 
     # Initialize a defaultdict to hold boroughs and their associated zipcodes
     borough_zipcodes = defaultdict(list)
+    nyc_zips_with_geojson = list(nyc_zips_geojson.keys())
 
     # Read the CSV file
     with open(file_loc, mode='r', encoding='utf-8-sig') as csvfile:
@@ -91,8 +94,11 @@ def get_borough_zips(file_loc: str='data/raw/zip_borough.csv') -> dict:
         for row in reader:
             borough = row['borough']
             zip = row['zip']
-            borough_zipcodes[borough].append(zip)
-            borough_zipcodes['NYC'].append(zip)
+            if zip not in nyc_zips_with_geojson:
+                continue
+            else:
+                borough_zipcodes[borough].append(zip)
+                borough_zipcodes['NYC'].append(zip)
 
     # Convert defaultdict to regular dict if needed
     borough_zipcodes = dict(borough_zipcodes)

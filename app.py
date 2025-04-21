@@ -54,14 +54,12 @@ NOTES = """
     1. All data shown is for the year 2016 due to limitation of Market Value Data
     2. Arrest data is shown for area 1000' outside any facility noted as "public"
     3. Data is absolute and not normalized for population or any other metric
-	4. Template and base design inspired by: 
-	[ivanlai - UK Housing prices](https://github.com/ivanlai/Plotly-App-UK-houseprices)
+	4. Template and base design inspired by: [ivanlai - UK Housing prices](https://github.com/ivanlai/Plotly-App-UK-houseprices)
 
     **Other data sources:**
     - [OpenStreetMap](https://www.openstreetmap.org)
     - [NYC Zipcode data](https://github.com/OpenDataDE/State-zip-code-GeoJSON)
-    - [NYC Zipcode and Borough data](https://www.nycbynatives.com/nyc_info/new_york_city_zip_codes.php)
-    from NYC By Natives
+    - [NYC Zipcode and Borough data](https://www.nycbynatives.com/nyc_info/new_york_city_zip_codes.php) from NYC By Natives
     - [NYC Arrest data](https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u/about_data)
     - [NYC Property Value data](https://data.cityofnewyork.us/City-Government/Revised-Notice-of-Property-Value-RNOPV-/8vgb-zm6e/about_data)
 	- [NYC Facility Information](https://data.cityofnewyork.us/City-Government/Facilities-Database/ji82-xba5/about_data)
@@ -74,8 +72,9 @@ Data Pre-processing
 ---------------------------------------------------------------------------- """
 summary_market_value = get_model_input_df()
 geo_zip_data = get_geo_json_zips()
-zip_dict = get_borough_zips()
 geo_zip_key_data = get_borough_geo_zips(geo_zip_data)
+zip_dict = get_borough_zips(geo_zip_key_data)
+
 # ---------------------------------------------
 
 # initial values:
@@ -329,7 +328,7 @@ app.layout = html.Div(
 					[
 						dcc.Markdown(
 							"University of Michigan - Masters of Data Science Project |"
-							+ "[Github link](https://github.com/kellerl7/Capstone) "
+							+ " [Github link](https://github.com/kellerl7/Capstone) "
 						)
 					],
 					style={
