@@ -18,19 +18,29 @@ cd nyc-public-facilities
 > This project utilizes the python library [uv](https://docs.astral.sh/uv/)
 > It is not necessary, but is recommended
 
-### Using UV
-If you choose to use uv, the project can be run by issuing the following command:
+### Getting Started
+The project can be run by issuing the following command:
 
 ```
+pip install uv
 uv run app.py
 ```
 
 # Project Description
-#TODO The city of New York City is the largest city in the USA, and has many different resources to service residents, workers, and travelers. As such, there are many facilities to support the life-like nature of the city. This project aims to provide a glimpse into the different facilities around the city, and visualize how other factors impact the value of a given neighborhood.
+The city of New York City is the largest city in the USA, and has many different resources to service residents, workers, and travelers. As such, there are many facilities to support the life-like nature of the city. This project aims to provide a glimpse into the different facilities around the city, and visualize how other factors impact the value of a given neighborhood.
 
-#TODO Static image of visualization
-## App Demo
--- Link to live demo --
+First, to breakdown the distribution of different facilities, we can use k-means clustering to categorize the different ares of the city based on what facilities make up the zip code.
+- Clustering is performed in the [unsupervised learning notebook](notebooks/Unsupervised.ipynb).
+
+![NYC Clusters](notebooks/Clusters_geo.png)
+
+We used data from NYC Open Data on Revised Notice of Property Value to train our model and target the variable `revised_market_value`. By setting this is a target, we are able to better determine underlying variables' relationship, specifically public facilities, with the value of a neighborhood.
+
+[PyCaret](https://pycaret.org/) was the library of choice to train a model, and the [Hubor Regressor from scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.HuberRegressor.html) was the final choice of model.
+- Modeling is performed in the [supervised learning notebook](notebooks/Supervised.ipynb)
+
+In doing so, we can visualize the most meaningful variables to the model:
+![Huber Regressor Feature Importance](notebooks/Model_coef.png).
 
 ## Project Structure
 ```
@@ -51,12 +61,11 @@ nyc-public-facilities/
 ```
 
 - The file `app.py` at the root directory pulls together the data and files under `src` to run a local server of Dash.
-- Data from this project focuses on the following:
-    - Public facilities
-    - Borough and code geospatial data
-    - Market value
-    - Crime data
-    - Miscellaneous data
+- Data from this project are open source and available for consumption at the following locations:
+    - [Public facilities](https://data.cityofnewyork.us/City-Government/Facilities-Database/ji82-xba5/about_data)
+    - [Zip code geospatial data](https://github.com/OpenDataDE/State-zip-code-GeoJSON)
+    - [NYC Planning: Borough geospatial data](https://www.nyc.gov/content/planning/pages/resources/datasets/borough-boundaries)
+    - [Market value](https://data.cityofnewyork.us/City-Government/Revised-Notice-of-Property-Value-RNOPV-/8vgb-zm6e/about_data)
+    - [Crime data](https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u/about_data)
 - A majority of the data was pulled from [New York City Public Data](https://opendata.cityofnewyork.us/).
-
-#TODO: Diagram of data flow?
+- Dash app adapated from [ivanlai/plotly-app-uk-houseprices](https://github.com/ivanlai/Plotly-App-UK-houseprices)
