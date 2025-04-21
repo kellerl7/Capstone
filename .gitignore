@@ -12,3 +12,4 @@ wheels/
 .python-version
 .python-version
 .DS_Store
+.vscode/launch.json
