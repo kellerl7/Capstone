@@ -69,5 +69,3 @@ nyc-public-facilities/
     - [Crime data](https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u/about_data)
 - A majority of the data was pulled from [New York City Public Data](https://opendata.cityofnewyork.us/).
 - Dash app adapated from [ivanlai/plotly-app-uk-houseprices](https://github.com/ivanlai/Plotly-App-UK-houseprices)
-
-#TODO: Diagram of data flow?
