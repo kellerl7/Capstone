@@ -16,7 +16,7 @@ def nyc_api_read(url: str, limit: int=5000):
 
     client = Socrata(
         socrata_domain,
-        app_token="XLvpOacSkjniOArUFmY0iq5kI",
+        #app_token={removed},
         timeout=100
     )
 
