@@ -104,3 +104,14 @@ def get_borough_zips(
     # Convert defaultdict to regular dict if needed
     borough_zipcodes = dict(borough_zipcodes)
     return borough_zipcodes
+
+def get_arrests_outside_buffer(
+        file_loc: str='data/processed/arrests_outside_buffer_by_zip_2016.csv'
+        ) -> pd.DataFrame:
+        """
+        Returns a dataframe with the summarized arrests outside buffer
+        """
+
+        df = pd.read_csv(file_loc)
+        df = df.set_index(df['zip'].astype(str)).drop(columns = ['arrest_year'])
+        return df

@@ -38,34 +38,23 @@ def get_Choropleth(
     if fig is None:
         fig = go.Figure()
 
-    if arg['viz_type'] == 'continuous':
-        fig.add_trace(
-            go.Choroplethmap(
-                geojson=geo_data,
-                locations=df['zip'],
-                featureidkey='properties.ZCTA5CE10',
-                colorscale=arg['colorscale'],
-                z=arg['z_vec'],
-                zmin=arg['min_value'],
-                zmax=arg['max_value'],
-                text=arg['text_vec'],
-                hoverinfo="text",
-                marker_opacity=marker_opacity,
-                marker_line_width=marker_line_width,
-                marker_line_color=marker_line_color,
-                colorbar_title=arg["title"],
-            )
+    fig.add_trace(
+        go.Choroplethmap(
+            geojson=geo_data,
+            locations=df['zip'],
+            featureidkey='properties.ZCTA5CE10',
+            colorscale=arg['colorscale'],
+            z=arg['z_vec'],
+            zmin=arg['min_value'],
+            zmax=arg['max_value'],
+            text=arg['text_vec'],
+            hoverinfo="text",
+            marker_opacity=marker_opacity,
+            marker_line_width=marker_line_width,
+            marker_line_color=marker_line_color,
+            colorbar_title=arg["title"],
         )
-    elif arg['viz_type'] == 'categorical':
-        fig.add_trace(
-            px.choropleth_map(
-                geojson=geo_data,
-                locations=df['zip'],
-                featureidkey='properties.ZCTA5CE10',
-                color=arg['z_vec'],
-                color_discrete_map=arg['colorscale'],
-            )
-        )
+    )
 
     return fig
 
@@ -102,17 +91,17 @@ def get_figure(
         # Visualize
         arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
         arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
-        arg["z_vec"] = df["cluster_name"]
+        arg["z_vec"] = df["Cluster"]
         arg["text_vec"] = df["cluster_name"] #TODO: Revise
-        arg["colorscale"] = _colors
+        arg["colorscale"] = 'Plasma'
         arg['viz_type'] = 'categorical'
         arg["title"] = "Public Facility Grouping"
 
     else:
-        arg["min_value"] = np.percentile(np.array(df["arrest_count"]), 10)
-        arg["max_value"] = np.percentile(np.array(df["arrest_count"]), 90)
-        arg["z_vec"] = df["arrest_count"]
-        arg["text_vec"] = df["arrest_type"]
+        arg["min_value"] = np.percentile(np.array(df["felony_arrest_count"]), 10)
+        arg["max_value"] = np.percentile(np.array(df["felony_arrest_count"]), 90)
+        arg["z_vec"] = df["felony_arrest_count"]
+        arg["text_vec"] = df['felony_arrest_count']
         arg["colorscale"] = "Picnic"
         arg['viz_type'] = 'continuous'
         arg["title"] = "Count of Arrests 1000' Away from Public Facility"
@@ -240,17 +229,3 @@ def price_ts(df, title, colors):
         font_color=colors["text"],
     )
     return fig
-
-
-def get_average_price_by_year(df, sectors):
-    avg_price_df = pd.DataFrame()
-    for sector in sectors:
-        dot_product = (
-            (df[("Count", sector)] * df[("Average Price", sector)])
-            .groupby(df.Year)
-            .sum()
-        )
-        _sum = df[("Count", sector)].groupby(df.Year).sum()
-        avg_price_df[sector] = np.round((dot_product / _sum) / 1000) * 1000
-
-    return avg_price_df

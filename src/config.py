@@ -37,6 +37,13 @@ config = {
                        "Cluster 9": "#103721",
                        "Cluster 10": "#20d8fd"}, 
 
+    "arrest_types": {
+        "F": "Felony",
+        "M": "Misdemeanor",
+        "V": "Violation",
+        "I": "Other"
+    },
+
     "boroughs_lookup": {
         'Staten Island': 'Staten Island',
         'Bronx': 'Bronx',

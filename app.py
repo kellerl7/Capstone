@@ -15,7 +15,6 @@ from flask_caching import Cache
 
 from config import config as cfg
 from figures_utils import (
-	get_average_price_by_year,
 	get_figure,
 	price_ts,
 	price_volume_ts,
@@ -26,6 +25,7 @@ from utils import (
 	get_geo_json_zips,
 	get_borough_zips,
 	get_borough_geo_zips,
+	get_arrests_outside_buffer,
 )
 
 warnings.filterwarnings("ignore")
@@ -78,6 +78,7 @@ summary_market_value = get_model_input_df()
 geo_zip_data = get_geo_json_zips()
 geo_zip_key_data = get_borough_geo_zips(geo_zip_data)
 zip_dict = get_borough_zips(geo_zip_key_data)
+arrest_data = get_arrests_outside_buffer()
 
 # ---------------------------------------------
 
@@ -89,7 +90,7 @@ borough_filter = zip_dict[initial_borough]
 initial_zip = random.choice(borough_filter)
 #initial_geo_sector = [regional_geo_sector[initial_region][initial_sector]]
 
-empty_series = pd.DataFrame(np.full(len(cfg["Years"]), np.nan), index=cfg["Years"])
+empty_series = pd.DataFrame(np.full(len(cfg["arrest_types"]), np.nan), index=list(cfg["arrest_types"].values()))
 empty_series.rename(columns={0: ""}, inplace=True)
 
 
@@ -229,7 +230,7 @@ app.layout = html.Div(
 							id="graph-type",
 							options=[
 								{"label": i, "value": i}
-								for i in ["Market Value", "Model Error", "Neighborhood Cluster"]
+								for i in ["Market Value", "Arrests outside 1000'", "Neighborhood Cluster"]
 							],
 							value="Market Value",
 							inline=True,
@@ -279,7 +280,7 @@ app.layout = html.Div(
 					style={
 						"display": "inline-block",
 						"padding": "20px 10px 10px 40px",
-						"width": "59%",
+						"width": "100%",
 					},
 					className="seven columns",
 				),
@@ -290,21 +291,21 @@ app.layout = html.Div(
 				# 		html.Div(
 				# 			[
 				# 				dcc.Checklist(
-				# 					id="property-type-checklist",
+				# 					id="arrest-type-checklist",
 				# 					options=[
-				# 						{"label": "F: Flats/Maisonettes", "value": "F"},
-				# 						{"label": "T: Terraced", "value": "T"},
-				# 						{"label": "S: Semi-Detached", "value": "S"},
-				# 						{"label": "D: Detached", "value": "D"},
+				# 						{"label": "F: Felony", "value": "F"},
+				# 						{"label": "M: Misdemeanor", "value": "M"},
+				# 						{"label": "V: Violation", "value": "V"},
+				# 						{"label": "I: Other", "value": "I"},
 				# 					],
-				# 					value=["F", "T", "S", "D"],
+				# 					value=["F", "M", "V", "I"],
 				# 					labelStyle={"display": "inline-block"},
 				# 					inputStyle={"margin-left": "10px"},
 				# 				),
 				# 			],
 				# 			style={"textAlign": "right"},
 				# 		),
-				# 		html.Div([dcc.Graph(id="price-time-series")]),
+				# 		html.Div([dcc.Graph(id="arrest-crime-count")]),
 				# 	],
 				# 	style={
 				# 		"display": "inline-block",
@@ -370,9 +371,9 @@ app.layout = html.Div(
 def update_map_title(borough, gtype):
 	if gtype == "Market Value":
 		return f"Avg market value for properties in a given borough {borough}, {initial_year}"
-	elif gtype == "Model Error":
+	elif gtype == "Arrests outside 1000'":
 		return (
-			f"Shows the average model error when predicting the market value in {borough}, {initial_year}"
+			f"Shows the average number of FELONY arrests when predicting the market value in {borough}, {initial_year}"
 		)
 	else:
 		return f"The given cluster breakdown for the different zipcodes in the borough {borough}, {initial_year}"
@@ -403,8 +404,8 @@ def update_region_postcode(borough):
 )  # @cache.memoize(timeout=cfg['timeout'])
 def update_Choropleth(borough, gtype, zips):
 	# Graph type selection------------------------------#
-	# Graph options: "Market Value", "Model Error", "Neighborhood Cluster"
-	if gtype in ["Market Value", "Neighborhood Cluster"]:
+	# Graph options: "Market Value", "Arrests outside 1000'", "Neighborhood Cluster"
+	if gtype in ["Market Value", "Neighborhood Cluster", "Arrests outside 1000'"]:
 		df = summary_market_value.loc[
 			(summary_market_value['year'] == initial_year) &
 			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
@@ -446,28 +447,27 @@ def update_Choropleth(borough, gtype, zips):
 
 # # Update price-time-series with postcode updates and graph-type
 # @app.callback(
-# 	Output("price-time-series", "figure"),
-# 	[Input("postcode", "value"), Input("property-type-checklist", "value")],
+# 	Output("arrest-crime-count", "figure"),
+# 	[Input("postcode", "value"), Input("arrest-type-checklist", "value")],
 # )
 # @cache.memoize(timeout=cfg["timeout"])
-# def update_price_timeseries(sectors, ptypes):
-# 	if len(sectors) == 0:
+# def update_arrest_count_graph(zips, arrest_types):
+# 	if len(zips) == 0:
 # 		return price_ts(empty_series, "Please select postcodes", colors)
 
-# 	if len(ptypes) == 0:
+# 	if len(arrest_types) == 0:
 # 		return price_ts(
 # 			empty_series, "Please select at least one property type", colors
 # 		)
 
 # 	# --------------------------------------------------#
-# 	df = price_volume_df.iloc[
-# 		np.isin(price_volume_df.index.get_level_values("Property Type"), ptypes),
-# 		np.isin(price_volume_df.columns.get_level_values("Sector"), sectors),
+# 	df = arrest_data.iloc[
+# 		np.isin(arrest_data.index.get_level_values("zip"), zips),
+# 		np.isin(arrest_data.columns, arrest_types),
 # 	]
 # 	df.reset_index(inplace=True)
-# 	avg_price_df = get_average_price_by_year(df, sectors)
 
-# 	if len(sectors) == 1:
+# 	if len(zips) == 1:
 # 		index = [(a, b) for (a, b) in df.columns if a != "Average Price"]
 # 		volume_df = df[index]
 # 		volume_df.columns = volume_df.columns.get_level_values(0)
