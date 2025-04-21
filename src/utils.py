@@ -21,6 +21,7 @@ def get_model_input_df(
 
     df = pd.read_csv(file_loc)
     df['zip'] = df['zip'].astype(int).astype(str)
+    df['cluster_name'] = df['Cluster'].apply(lambda x: 'Cluster ' + str(x+1))
 
     return df
 
@@ -95,7 +96,7 @@ def get_borough_zips(
             borough = row['borough']
             zip = row['zip']
             if zip not in nyc_zips_with_geojson:
-                continue
+               continue
             else:
                 borough_zipcodes[borough].append(zip)
                 borough_zipcodes['NYC'].append(zip)

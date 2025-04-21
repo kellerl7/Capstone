@@ -26,6 +26,17 @@ config = {
     "timeout": 5 * 60,  # used as part of flask_caching
     "cache threshold": 10_000,  # Corresponds to ~350 MB max
 
+    "cluster_colors": {"Cluster 1": "#3588d1", 
+                       "Cluster 2": "#96da31",
+                       "Cluster 3": "#4b3596",
+                       "Cluster 4": "#18d19b",
+                       "Cluster 5": "#992a13",
+                       "Cluster 6": "#89b786",
+                       "Cluster 7": "#350e15",
+                       "Cluster 8": "#d0c3c6",
+                       "Cluster 9": "#103721",
+                       "Cluster 10": "#20d8fd"}, 
+
     "boroughs_lookup": {
         'Staten Island': 'Staten Island',
         'Bronx': 'Bronx',

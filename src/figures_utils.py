@@ -38,23 +38,34 @@ def get_Choropleth(
     if fig is None:
         fig = go.Figure()
 
-    fig.add_trace(
-        go.Choroplethmap(
-            geojson=geo_data,
-            locations=df['zip'],
-            featureidkey='properties.ZCTA5CE10',
-            colorscale=arg['colorscale'],
-            z=arg['z_vec'],
-            zmin=arg['min_value'],
-            zmax=arg['max_value'],
-            text=arg['text_vec'],
-            hoverinfo="text",
-            marker_opacity=marker_opacity,
-            marker_line_width=marker_line_width,
-            marker_line_color=marker_line_color,
-            colorbar_title=arg["title"],
+    if arg['viz_type'] == 'continuous':
+        fig.add_trace(
+            go.Choroplethmap(
+                geojson=geo_data,
+                locations=df['zip'],
+                featureidkey='properties.ZCTA5CE10',
+                colorscale=arg['colorscale'],
+                z=arg['z_vec'],
+                zmin=arg['min_value'],
+                zmax=arg['max_value'],
+                text=arg['text_vec'],
+                hoverinfo="text",
+                marker_opacity=marker_opacity,
+                marker_line_width=marker_line_width,
+                marker_line_color=marker_line_color,
+                colorbar_title=arg["title"],
+            )
         )
-    )
+    elif arg['viz_type'] == 'categorical':
+        fig.add_trace(
+            px.choropleth_map(
+                geojson=geo_data,
+                locations=df['zip'],
+                featureidkey='properties.ZCTA5CE10',
+                color=arg['z_vec'],
+                color_discrete_map=arg['colorscale'],
+            )
+        )
 
     return fig
 
@@ -79,14 +90,22 @@ def get_figure(
         arg["z_vec"] = df["revised_market_value"]
         arg["text_vec"] = df["revised_market_value"] #TODO: Revise
         arg["colorscale"] = "YlOrRd"
+        arg['viz_type'] = 'continuous'
         arg["title"] = "Revised Market Value ($)"
 
     elif gtype == "Neighborhood Cluster":
-        arg["min_value"] = np.percentile(np.array(df.cluster), 5)
-        arg["max_value"] = np.percentile(np.array(df.cluster), 95)
-        arg["z_vec"] = df["cluster"]
-        arg["text_vec"] = df["cluster"] #TODO: Revise
-        arg["colorscale"] = "Plasma"
+        print(df["cluster_name"].head())
+        # Create our colorscale - Colors defined up to 10 clusters
+        max_clusters = df["Cluster"].max()+1
+        _colors = dict(list(cfg['cluster_colors'].items())[:max_clusters])
+
+        # Visualize
+        arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
+        arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
+        arg["z_vec"] = df["cluster_name"]
+        arg["text_vec"] = df["cluster_name"] #TODO: Revise
+        arg["colorscale"] = _colors
+        arg['viz_type'] = 'categorical'
         arg["title"] = "Public Facility Grouping"
 
     else:
@@ -95,6 +114,7 @@ def get_figure(
         arg["z_vec"] = df["arrest_count"]
         arg["text_vec"] = df["arrest_type"]
         arg["colorscale"] = "Picnic"
+        arg['viz_type'] = 'continuous'
         arg["title"] = "Count of Arrests 1000' Away from Public Facility"
 
     # ----------------------------------------- #
