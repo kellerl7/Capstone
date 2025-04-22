@@ -16,8 +16,6 @@ from flask_caching import Cache
 from config import config as cfg
 from figures_utils import (
 	get_figure,
-	price_ts,
-	price_volume_ts,
 )
 from utils import (
 	get_model_input_df,
@@ -285,6 +283,9 @@ app.layout = html.Div(
 					className="seven columns",
 				),
 				# Right Column ------------------------------------#
+				# ***
+				# Option to add in a graph column - not implemented
+				# ***
 				# html.Div(
 				# 	id="graph-container",
 				# 	children=[
@@ -411,8 +412,7 @@ def update_Choropleth(borough, gtype, zips):
 			(summary_market_value['borough'] == borough if borough != 'NYC' else True)
 		]
 	else:
-		#TODO: Switch dataset to model output to graph error
-		#df = regional_percentage_delta_data[year][region]
+		# Option to switch datasets if pick a different choice
 		pass
 
 	# For high-lighting mechanism ----------------------#
@@ -467,6 +467,13 @@ def update_Choropleth(borough, gtype, zips):
 # 	]
 # 	df.reset_index(inplace=True)
 
+#melted_df = filtered_df.reset_index().melt(id_vars='index', value_vars=arrest_checklist, 
+#                                             var_name='Category', value_name='Value')
+#
+# 
+#fig = px.bar(melted_df, x='Category', y='Value', color='index', 
+#             title='Arrests by Zip Code and Category',
+#             labels={'index': 'Zip Code', 'Category': 'Category', 'Value': 'Count'})
 # 	if len(zips) == 1:
 # 		index = [(a, b) for (a, b) in df.columns if a != "Average Price"]
 # 		volume_df = df[index]
