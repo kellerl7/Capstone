@@ -35,6 +35,7 @@ def get_Choropleth(
     marker_line_color,
     fig=None
 ):
+    
     if fig is None:
         fig = go.Figure()
 
@@ -83,7 +84,6 @@ def get_figure(
         arg["title"] = "Revised Market Value ($)"
 
     elif gtype == "Neighborhood Cluster":
-        print(df["cluster_name"].head())
         # Create our colorscale - Colors defined up to 10 clusters
         max_clusters = df["Cluster"].max()+1
         _colors = dict(list(cfg['cluster_colors'].items())[:max_clusters])
@@ -91,7 +91,7 @@ def get_figure(
         # Visualize
         arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
         arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
-        arg["z_vec"] = df["Cluster"]
+        arg["z_vec"] = df["Cluster"].astype(str)
         arg["text_vec"] = df["cluster_name"] #TODO: Revise
         arg["colorscale"] = 'Plasma'
         arg['viz_type'] = 'categorical'
