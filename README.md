@@ -25,6 +25,9 @@ The project can be run by issuing the following command:
 pip install uv
 uv run app.py
 ```
+Within the app, there is an option to select either all of New York City, or one of the different boroughs. Additionally, you can select the different zipcodes displayed on the map. The zipcode drop down allows you to see all zipcodes associated with the selected borough.
+
+![NYC App Screenshot|560](assets/Dash_App_Example.png)
 
 # Project Description
 The city of New York City is the largest city in the USA, and has many different resources to service residents, workers, and travelers. As such, there are many facilities to support the life-like nature of the city. This project aims to provide a glimpse into the different facilities around the city, and visualize how other factors impact the value of a given neighborhood.

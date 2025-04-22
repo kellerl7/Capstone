@@ -92,7 +92,7 @@ def get_figure(
         arg["min_value"] = np.percentile(np.array(df.Cluster), 5)
         arg["max_value"] = np.percentile(np.array(df.Cluster), 95)
         arg["z_vec"] = df["Cluster"].astype(str)
-        arg["text_vec"] = df["cluster_name"] #TODO: Revise
+        arg["text_vec"] = df[["cluster_name"]] #TODO: Revise
         arg["colorscale"] = 'Plasma'
         arg['viz_type'] = 'categorical'
         arg["title"] = "Public Facility Grouping"
